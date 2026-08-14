@@ -65,6 +65,7 @@ impl Message {
         Ok(())
     }
 
+    /// Creates a sub-message from the blocks at index `start` to index `start + count`.
     #[must_use]
     pub fn sub_message(&self, start: usize, count: usize) -> Self {
         Self(self.0[start..start + count].to_vec())

@@ -1,6 +1,6 @@
 [package]
 name = "sha256-viz"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.97"
 authors = ["c1ph3rC4t"]
@@ -17,7 +17,7 @@ name = "sha256-viz"
 path = "src/main.rs"
 
 [dependencies]
-thiserror = "2.0.19"
+thiserror = "2.0.20"
 
 [dev-dependencies]
 cargo-husky = { version = "1.5.0", default-features = true, features = [
