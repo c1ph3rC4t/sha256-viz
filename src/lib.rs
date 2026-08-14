@@ -64,6 +64,11 @@ impl Message {
         }
         Ok(())
     }
+
+    #[must_use]
+    pub fn sub_message(&self, start: usize, count: usize) -> Self {
+        Self(self.0[start..start + count].to_vec())
+    }
 }
 
 impl TryFrom<&[u8]> for Message {
@@ -130,6 +135,13 @@ impl Index<usize> for Message {
 impl IndexMut<usize> for Message {
     fn index_mut(&mut self, i: usize) -> &mut [u32; 16] {
         &mut self.0[i]
+    }
+}
+
+impl std::ops::Add for &Message {
+    type Output = Message;
+    fn add(self, rhs: Self) -> Message {
+        Message([&self.0[..], &rhs.0[..]].concat())
     }
 }
 
@@ -301,16 +313,36 @@ pub struct Sha256 {
 
 impl Sha256 {
     /// Type for creating a new [`Sha256`].
+    pub fn new<M>(message: M) -> Self
+    where
+        M: Into<Message>,
+    {
+        Self {
+            stage: Sha256Stage::PreProc,
+            block: 0,
+            round: 0,
+            message: message.into(),
+            schedule: MessageSchedule::new(),
+            working_vars: WorkingVars::new(),
+            hash_vals: HashVals::new(),
+        }
+    }
+
+    /// Type for creating a new [`Sha256`].
     ///
     /// # Errors
     ///
     /// Will return [`Error::TryFromSliceError`] upon failure to create a [`Message`] from `message`
-    pub fn new(message: &[u8]) -> Result<Self> {
+    pub fn try_new<M>(message: M) -> Result<Self>
+    where
+        M: TryInto<Message>,
+        Error: From<M::Error>,
+    {
         Ok(Self {
             stage: Sha256Stage::PreProc,
             block: 0,
             round: 0,
-            message: Message::try_from(message)?,
+            message: message.try_into()?,
             schedule: MessageSchedule::new(),
             working_vars: WorkingVars::new(),
             hash_vals: HashVals::new(),
@@ -807,7 +839,7 @@ mod tests {
 
     #[test]
     fn test_hash_validity() -> Result<()> {
-        let sha = Sha256::new(
+        let sha = Sha256::try_new(
             ">Hey, just wondering if you got your photos printed?\n>Bogos binted?\n>What\n>👽"
                 .as_bytes(),
         )?;

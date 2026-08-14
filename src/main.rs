@@ -13,16 +13,18 @@
 //! `sha256-viz <FILE>`
 
 use sha256_viz::{
-    Sha256,
+    Message, Sha256,
     Sha256Stage::{BlockLoad, Compression, Finished, MessageExpansion, PreProc},
     result::Result,
 };
-use std::{fs, path::PathBuf, thread::sleep, time::Duration};
+use std::{fs::File, io::Read, path::PathBuf, thread::sleep, time::Duration};
 
 const PRE_PROC_SLEEP_DUR: Duration = Duration::from_millis(500);
 const BLOCK_LOAD_SLEEP_DUR: Duration = Duration::from_millis(500);
 const MESSAGE_EXPANSION_SLEEP_DUR: Duration = Duration::from_millis(50);
 const COMPRESSION_SLEEP_DUR: Duration = Duration::from_millis(50);
+const GIB: u64 = 1024_u64.pow(3);
+const MAX: u64 = GIB;
 
 fn render(sha: &Sha256) {
     println!("\x1b[0;0H{sha}");
@@ -56,12 +58,25 @@ fn main() -> Result<()> {
         std::convert::Into::into,
     );
 
-    let sha = Sha256::new(&fs::read(path)?)?;
+    let mut buf = Vec::new();
+    File::open(path)?.take(MAX).read_to_end(&mut buf)?;
+
+    let message: Message = buf.as_slice().try_into()?;
+
+    let mut sha = Sha256::new(message.sub_message(0, 4));
 
     println!("\x1b[2J");
 
-    for sha in sha {
-        render(&sha);
+    for i in 3..message.0.len() {
+        let cur = sha.next();
+        if let Some(cur) = cur {
+            render(&cur);
+            if sha.stage == BlockLoad {
+                sha.message = &sha.message + &message.sub_message(i, 1);
+            }
+        } else {
+            break;
+        }
     }
 
     Ok(())
