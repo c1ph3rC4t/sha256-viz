@@ -586,8 +586,6 @@ fn display_block_load(sha: &Sha256, f: &mut std::fmt::Formatter<'_>) -> std::fmt
         join_blocks_horizontally(&[
             String::from("  "),
             format!("{message}\n                                   "),
-            // "\n".repeat(sha.block * 17) + " < \n".repeat(16).as_str(),
-            // " > \n".repeat(16),
             " <  > \n".repeat(16),
             format!("{:#?}      ", sha.schedule),
             format!("{:#?}", sha.hash_vals),
@@ -701,11 +699,11 @@ fn display_compression(
                 "{:#?}
 
 {:032b}   < e
-{:-<40}
+{:-<42}
 {:032b}   < r6
 {:032b} ^ < r11
 {:032b} ^ < r25
-{:-<40}
+{:-<42}
 {:032b}   > Σ1(e)
 
 {:032b} < e
@@ -724,11 +722,11 @@ fn display_compression(
 {:032b}   > temp1
 
 {:032b}   < a
-{:-<40}
+{:-<42}
 {:032b}   < r2
 {:032b} ^ < r13
 {:032b} ^ < r22
-{:-<40}
+{:-<42}
 {:032b}   > Σ0(a)
 
 {:032b} < a
