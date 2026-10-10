@@ -63,19 +63,17 @@ fn main() -> Result<()> {
 
     let message: Message = buf.as_slice().try_into()?;
 
-    let mut sha = Sha256::new(message.sub_message(0, 4));
+    let preload = message.0.len().min(4);
+    let mut next_block = preload;
+    let mut sha = Sha256::new(message.sub_message(0, preload));
 
     println!("\x1b[2J");
 
-    for i in 3..message.0.len() {
-        let cur = sha.next();
-        if let Some(cur) = cur {
-            render(&cur);
-            if sha.stage == BlockLoad {
-                sha.message = &sha.message + &message.sub_message(i, 1);
-            }
-        } else {
-            break;
+    while let Some(cur) = sha.next() {
+        render(&cur);
+        if sha.stage == BlockLoad && next_block < message.0.len() {
+            sha.message = &sha.message + &message.sub_message(next_block, 1);
+            next_block += 1;
         }
     }
 
